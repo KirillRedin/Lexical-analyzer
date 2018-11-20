@@ -1,0 +1,12 @@
+PROGRAM TRUE-1;
+BEGIN
+var first : 10;
+VAR SECOND:200;
+IF FIRST - SECOND
+THEN FIRST: 20
+ELSE FIRST: 30
+(*':><!@#%*))
+(())
+(* незакритий коментар
+))
+END,

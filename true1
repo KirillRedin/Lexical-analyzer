@@ -1,0 +1,11 @@
+PROGRAM TRUE1;
+BEGIN
+VAR FIRST : 10;
+VAR SECOND:200;
+IF FIRST = SECOND
+THEN FIRST: 20
+ELSE FIRST: 30
+(*':><!@#%*)
+(* багаторядковий
+коментар *)
+END.

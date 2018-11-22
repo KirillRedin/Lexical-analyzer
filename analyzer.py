@@ -26,11 +26,14 @@ class LexicalAnalyzer:
 
         self.uIntsTable = LexemesTable(501)
         self.idnTable = LexemesTable(1001)
+        self.timeTablle = LexemesTable(1101)
         self.delTable = {}
         self.lexemesTable = []
         self.errors = []
         self.line_number = self.column_number = 0
         self.buf = ''
+        self.buf2 = ''
+        self.buf3 = ''
         self.is_comment = False
         self.fill_del_table()
 
@@ -48,21 +51,29 @@ class LexicalAnalyzer:
 
                 if self.is_comment:
                     if character == ')':
-                        if line[self.column_number - 2] == '*'and (self.line_number != comment_line \
-                                or comment_col != self.column_number - 2):
+                        if line[self.column_number - 2] == '*'and (self.line_number != comment_line
+                                                                   or comment_col != self.column_number - 2):
                             self.is_comment = False
                     continue
 
                 elif self.get_category(character) == 'LETTER':
                     if self.buf.isdigit():
+                        self.errors.append(Error("Unexpected symbol '%c'" % character, self.line_number,
+                                                 self.column_number))
                         self.get_lexeme()
                     self.buf += character
 
                 elif self.get_category(character) == 'DIGIT':
-                    self.buf += character
+                    if self.buf2 == ':':
+                        self.buf3 += character
+                    else:
+                        self.buf += character
 
                 elif self.get_category(character) == 'DELIMITER':
                     if self.buf != '':
+                        if self.buf.isdigit() and character == ':' and self.buf3 == '':
+                            self.buf2 = character
+                            continue
                         self.get_lexeme()
                     self.buf = character
                     self.get_lexeme()
@@ -90,6 +101,9 @@ class LexicalAnalyzer:
 
         if self.is_comment:
             self.errors.append(Error("End of file found, '*)' expected", comment_line, comment_col))
+        else:
+            if self.buf != '':
+                self.get_lexeme()
 
     def get_category(self, character):
 
@@ -117,23 +131,28 @@ class LexicalAnalyzer:
             keyword_lexeme = Lexeme(self.buf, self.keywordsTable[self.buf], self.line_number,
                                     self.column_number - len(self.buf))
             self.lexemesTable.append(keyword_lexeme)
-            self.buf = ''
 
         elif self.buf in self.delTable:
             delim_lexeme = Lexeme(self.buf, self.delTable[self.buf], self.line_number,
                                   self.column_number - len(self.buf) + 1)
             self.lexemesTable.append(delim_lexeme)
-            self.buf = ''
 
-        elif self.buf.isdigit():
+        elif self.buf.isdigit() and self.buf2 == '':
             u_int_lexeme = self.uIntsTable.add(int(self.buf), self.line_number, self.column_number - len(self.buf))
             self.lexemesTable.append(u_int_lexeme)
-            self.buf = ''
+
+        elif self.buf.isdigit() and self.buf2 == ":" and self.buf3.isdigit():
+            if int(self.buf) <= 24 and int(self.buf3) <= 60:
+                time_lexeme = self.timeTablle.add(self.buf + self.buf2 + self.buf3, self.line_number, self.column_number - len(self.buf))
+                self.lexemesTable.append(time_lexeme    )
 
         else:
             idn_lexeme = self.idnTable.add(self.buf, self.line_number, self.column_number - len(self.buf))
             self.lexemesTable.append(idn_lexeme)
-            self.buf = ''
+
+        self.buf = ''
+        self.buf2 = ''
+        self.buf3 = ''
 
     def fill_del_table(self):
 
@@ -158,5 +177,5 @@ class LexicalAnalyzer:
 
 
 analyzer = LexicalAnalyzer()
-analyzer.parse('true2')
+analyzer.parse('true1')
 analyzer.print_result()
